@@ -12,7 +12,7 @@ from __future__ import print_function
 
 import pkg_resources
 from sphinx.domains import Domain, ObjType
-from sphinx.locale import l_
+from sphinx.locale import _
 from sphinx.roles import XRefRole
 from sphinx.util.nodes import make_refnode
 
@@ -29,11 +29,11 @@ class ROSDomain(Domain):
     name = 'ros'
     label = 'ros'
     object_types = {
-        'package': ObjType(l_('package'), 'pkg'),
-        'message': ObjType(l_('message'), 'msg'),
-        'service': ObjType(l_('service'), 'srv'),
-        'action': ObjType(l_('action'), 'action'),
-        'node': ObjType(l_('node'), 'node'),
+        'package': ObjType(_('package'), 'pkg'),
+        'message': ObjType(_('message'), 'msg'),
+        'service': ObjType(_('service'), 'srv'),
+        'action': ObjType(_('action'), 'action'),
+        'node': ObjType(_('node'), 'node'),
     }
     directives = {
         'package': ROSPackage,
@@ -121,7 +121,7 @@ def setup(app):
     app.add_config_value('ros_package_attrs_formatter', {}, True)
     app.add_config_value('ros_base_path', [], True)
     app.add_domain(ROSDomain)
-    app.add_lexer("rostype", ROSTypeLexer())
+    app.add_lexer("rostype", ROSTypeLexer)
     try:
         version = pkg_resources.require('sphinxcontrib-ros')[0].version
     except pkg_resources.DistributionNotFound:

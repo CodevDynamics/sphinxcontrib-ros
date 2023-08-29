@@ -33,10 +33,10 @@ class GroupedFieldNoArg(Field):
     def __init__(self, name, names=(), label=None, rolename=None):
         Field.__init__(self, name, names, label, False, rolename)
 
-    def make_field(self, types, domain, items):
+    def make_field(self, types, domain, item, env=None,inliner=None,location=None):
         fieldname = nodes.field_name('', self.label)
         listnode = self.list_type()
-        for fieldarg, content in items:
+        for fieldarg, content in item:
             listnode += nodes.list_item('', nodes.paragraph('', '', *content))
         fieldbody = nodes.field_body('', listnode)
         return nodes.field('', fieldname, fieldbody)
@@ -99,7 +99,7 @@ class ROSObjectDescription(ObjectDescription):
         indextext = _('%s (ROS %s)') % (name, self.objtype)
         self.indexnode['entries'].append(('single', indextext,
                                           targetname,
-                                          ''))
+                                          '',''))
 
     def before_content(self):
         content = self.update_content()
@@ -134,7 +134,12 @@ class ROSObjectDescription(ObjectDescription):
             srcline = None
             src = None
         else:
-            src, srcline = self.content.info(lineno)
+            length = len(self.content)
+            if lineno >= length:
+                src = self.content[length - 1]
+            else:
+                src = self.content.info(lineno)
+            srcline = lineno
         return (src, srcline)
 
     def merge_field(self, src_node, dest_node):

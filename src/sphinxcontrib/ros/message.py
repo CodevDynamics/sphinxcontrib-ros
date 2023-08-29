@@ -13,7 +13,7 @@ from __future__ import print_function
 import os
 import codecs
 import re
-from sphinx.locale import l_
+from sphinx.locale import _
 from docutils import nodes
 from docutils.statemachine import StringList
 from docutils.parsers.rst import directives
@@ -78,12 +78,14 @@ class ROSField(object):
     """
     matcher = re.compile(r'([\w/]+)(\s*\[\s*\d*\s*\])?'
                          '\s+(\w+)(\s*=\s*[^#]+)?(\s*)(#.*)?$')
+    matcher_comment = re.compile(r'^\w+.*#(.+)')
 
     def __init__(self, line, source=None, offset=0,
                  pre_comments='', package_name=''):
         self.source = source
         self.offset = offset
         result = self.matcher.match(line)
+        comment_result = self.matcher_comment.match(line)
         if result is None:
             self.name = None
             return
@@ -98,6 +100,8 @@ class ROSField(object):
         else:
             self.value = self.value.strip()
             comment = comment[1:]
+        if comment_result:
+            comment = comment_result.group(1)
         if self.type not in BUILTIN_TYPES:
             if '/' not in self.type:
                 # if the type is not builtin type and misses the package name
@@ -114,17 +118,17 @@ class ROSField(object):
         desc = StringList()
         pre_blocks = split_blocks(self.pre_comments)
         post_blocks = split_blocks(self.comment + self.post_comments)
-        if 'up-all' in field_comment_option:
+        if b'up-all' in field_comment_option:
             desc = join_blocks(pre_blocks)
-        elif 'up' in field_comment_option:
+        elif b'up' in field_comment_option:
             if pre_blocks:
                 desc = pre_blocks[-1]
-        elif 'right1' in field_comment_option:
+        elif b'right1' in field_comment_option:
             desc = self.comment
-        elif 'right-down' in field_comment_option:
+        elif b'right-down' in field_comment_option:
             if post_blocks:
                 desc = post_blocks[0]
-        elif 'right-down-all' in field_comment_option:
+        elif b'right-down-all' in field_comment_option:
             if post_blocks:
                 desc = join_blocks(post_blocks)
         return desc
@@ -214,20 +218,20 @@ class ROSFieldGroupType(object):
     def get_doc_field_types(self):
         return [
             TypedField(self.field_name,
-                       label=l_(self.field_label),
+                       label=_(self.field_label),
                        names=(self.field_name,),
                        typerolename='msg',
                        typenames=('{0}-{1}'.format(self.field_name,
                                                    TYPE_SUFFIX),)),
             TypedField(self.constant_name,
-                       label=l_(self.constant_label),
+                       label=_(self.constant_label),
                        names=(self.constant_name,),
                        typerolename='msg',
                        typenames=('{0}-{1}'.format(self.constant_name,
                                                    TYPE_SUFFIX),)),
             GroupedField('{0}-{1}'.format(self.constant_name,
                                           VALUE_SUFFIX),
-                         label=l_('{0} (Value)'.format(self.constant_label)),
+                         label=_('{0} (Value)'.format(self.constant_label)),
                          names=('{0}-{1}'.format(self.constant_name,
                                                  VALUE_SUFFIX),)),
             ]
@@ -314,7 +318,19 @@ class ROSAutoType(ROSType):
     }
 
     def update_content(self):
-        package_name, type_name = self.arguments[0].split('/', 1)
+        arg_value_list = self.arguments[0].split('/')
+        if len(arg_value_list) >= 3:
+            package_name = arg_value_list[0]
+            type = arg_value_list[1]
+            type_name = arg_value_list[2]
+        elif len(arg_value_list) >= 2:
+            package_name = arg_value_list[0]
+            type = None
+            type_name = arg_value_list[1]
+        else:
+            package_name = arg_value_list
+            type = None
+            type_name = None
         package = self.find_package(package_name)
         if not package:
             return
